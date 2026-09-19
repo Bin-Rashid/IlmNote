@@ -40,3 +40,4 @@ backupofstyle/
 create_table.py
 create_notes_table.py
 test_*.py
+create_auth_tables.py
