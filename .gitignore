@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Database — ব্যক্তিগত ডেটা
+ilmnote.db
+*.db
+*.db.bak_*
+*.db.backup
+
+# Uploads — ব্যক্তিগত ছবি
+uploads/
+
+# Runtime files
+error.txt
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local transfer folder
+IlmNoteTransfer/
+
+# Backup folders
+backupofstyle/
+
+# One-off scripts
+create_table.py
+create_notes_table.py
+test_*.py

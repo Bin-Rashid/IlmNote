@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}ক্যাটাগরি — {{ settings.site_name }}{% endblock %}
+{% block content %}
+<header class="page-head"><h1>ক্যাটাগরি</h1></header>
+
+<form method="post" class="inline-form">
+  <input type="text" name="name" placeholder="নাম" required>
+  <input type="text" name="description" placeholder="বর্ণনা">
+  <input type="color" name="color" value="#176B4D">
+  <button class="btn btn-primary">যোগ করুন</button>
+</form>
+
+<div class="grid grid-3">
+  {% for c in categories %}
+  <div class="card small-card">
+    <span class="badge" style="background:{{ c.color }}">{{ c.name }}</span>
+    <p class="muted">{{ c.description }}</p>
+    <small>{{ c.count }} টি লেখা</small>
+    <div class="card-actions">
+      <a class="btn-icon" href="{{ url_for('articles', category=c.slug) }}">📚 দেখুন</a>
+      <form method="post" action="{{ url_for('delete_category', cid=c.id) }}" onsubmit="return confirm('মুছবেন?');">
+        <button class="btn-icon">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

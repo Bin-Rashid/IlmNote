@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}সব লেখা — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <h1>সব লেখা</h1>
+  <div class="view-switch">
+    <button data-view="grid" class="view-btn" title="গ্রিড ভিউ">
+      <svg class="icon"><use href="#i-grid"/></svg>
+    </button>
+    <button data-view="list" class="view-btn" title="লিস্ট ভিউ">
+      <svg class="icon"><use href="#i-list"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="filters">
+  <form method="get" class="filter-form">
+    <div class="filter-item">
+      <svg class="icon icon-sm"><use href="#i-folder"/></svg>
+      <select name="category" onchange="this.form.submit()">
+        <option value="">সব ক্যাটাগরি</option>
+        {% for c in categories %}
+          <option value="{{ c.slug }}" {% if active_category==c.slug %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-item">
+      <svg class="icon icon-sm"><use href="#i-tag"/></svg>
+      <select name="tag" onchange="this.form.submit()">
+        <option value="">সব ট্যাগ</option>
+        {% for t in all_tags %}
+          <option value="{{ t.slug }}" {% if active_tag==t.slug %}selected{% endif %}>{{ t.name }} ({{ t.count }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <label class="check">
+      <input type="checkbox" name="fav" value="1" {% if fav %}checked{% endif %} onchange="this.form.submit()">
+      <svg class="icon icon-sm"><use href="#i-star"/></svg> পছন্দ
+    </label>
+    <label class="check">
+      <input type="checkbox" name="bm" value="1" {% if bm %}checked{% endif %} onchange="this.form.submit()">
+      <svg class="icon icon-sm"><use href="#i-bookmark"/></svg> বুকমার্ক
+    </label>
+  </form>
+</div>
+
+{% if articles %}
+<div id="articlesGrid" class="grid grid-3" data-view="{{ settings.view_mode }}">
+  {% for a in articles %}
+    <article class="card" data-id="{{ a.id }}">
+    <a class="card-media" href="{{ url_for('article', slug=a.slug) }}">
+      {% if a.cover_image %}
+        <img loading="lazy" src="{{ url_for('uploaded_file', filename=a.cover_image.split('/')[-1]) }}" alt="">
+      {% else %}
+        <div class="card-cover placeholder"><span>{{ a.title[:1] }}</span></div>
+      {% endif %}
+    </a>
+    <div class="card-body">
+      {% if a.category_name %}
+        <span class="badge" style="--badge-color:{{ a.category_color }}">{{ a.category_name }}</span>
+      {% endif %}
+      <h3><a href="{{ url_for('article', slug=a.slug) }}">{{ a.title }}</a></h3>
+      {% if a.author_name %}
+      <div class="card-author">
+        <span class="mini-avatar">{{ a.author_name[:1] }}</span>
+        <span>{{ a.author_name }}</span>
+      </div>
+      {% endif %}
+      <p class="muted">{{ a.short_description[:140] }}</p>
+      <div class="meta">
+        <span><svg class="icon icon-sm"><use href="#i-clock"/></svg> {{ a.reading_time }} মি.</span>
+        <span><svg class="icon icon-sm"><use href="#i-calendar"/></svg> {{ a.created_at[:10] }}</span>
+        {% if a.source_name %}<span><svg class="icon icon-sm"><use href="#i-link"/></svg> {{ a.source_name }}</span>{% endif %}
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon toggle-bm" data-id="{{ a.id }}" title="বুকমার্ক">
+          <svg class="icon"><use href="#i-bookmark"/></svg>
+        </button>
+        <button class="btn-icon toggle-fav" data-id="{{ a.id }}" title="পছন্দ">
+          <svg class="icon"><use href="#i-star"/></svg>
+        </button>
+        <a class="btn-icon" href="{{ url_for('editor', aid=a.id) }}" title="সম্পাদনা">
+          <svg class="icon"><use href="#i-edit"/></svg>
+        </a>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon"><svg class="icon"><use href="#i-book"/></svg></div>
+  <h3>কোনো লেখা পাওয়া যায়নি।</h3>
+  <a class="btn btn-primary" href="{{ url_for('editor') }}">
+    <svg class="icon"><use href="#i-plus"/></svg> নতুন লেখা লিখুন
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

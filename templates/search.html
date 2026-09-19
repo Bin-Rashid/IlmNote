@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}অনুসন্ধান — {{ settings.site_name }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1>অনুসন্ধান</h1>
+</header>
+
+<form method="get" class="search-form">
+  <input type="search" name="q" value="{{ q }}" placeholder="কী খুঁজছেন?" autofocus>
+  <button class="btn btn-primary">খুঁজুন</button>
+</form>
+
+{% if q %}
+  <p class="muted">“{{ q }}” এর জন্য {{ results|length }} টি ফলাফল।</p>
+  {% if results %}
+  <div class="grid grid-3">
+    {% for a in results %}
+    <article class="card">
+      {% if a.cover_image %}
+        <img loading="lazy" class="card-cover" src="{{ url_for('uploaded_file', filename=a.cover_image.split('/')[-1]) }}" alt="">
+      {% else %}
+        <div class="card-cover placeholder">{{ a.title[:1] }}</div>
+      {% endif %}
+      <div class="card-body">
+        {% if a.category_name %}<span class="badge" style="background:{{ a.category_color }}">{{ a.category_name }}</span>{% endif %}
+        <h3><a href="{{ url_for('article', slug=a.slug) }}">{{ a.title }}</a></h3>
+        <p class="muted">{{ a.short_description[:120] }}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="empty"><h3>কিছু পাওয়া যায়নি।</h3></div>
+  {% endif %}
+{% endif %}
+{% endblock %}

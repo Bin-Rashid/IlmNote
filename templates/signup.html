@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}সাইন-আপ — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-icon">
+      <svg class="icon"><use href="#i-user"/></svg>
+    </div>
+    <h1>সাইন-আপ</h1>
+    <p class="muted">নতুন অ্যাকাউন্ট তৈরি করুন</p>
+
+    <form method="post" class="auth-form">
+      <label>ইউজারনেম (ছোট হাতের অক্ষর)
+        <input type="text" name="username" pattern="[a-z0-9_]+" required autofocus>
+      </label>
+      <label>প্রদর্শিত নাম
+        <input type="text" name="display_name" placeholder="আপনার আসল নাম">
+      </label>
+      <label>ইমেইল
+        <input type="email" name="email" required>
+      </label>
+      <label>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)
+        <input type="password" name="password" minlength="6" required>
+      </label>
+      <label>পাসওয়ার্ড আবার
+        <input type="password" name="password2" minlength="6" required>
+      </label>
+      <button class="btn btn-primary" style="width:100%">
+        <svg class="icon"><use href="#i-save"/></svg> অ্যাকাউন্ট তৈরি করুন
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      আগেই অ্যাকাউন্ট আছে? <a href="{{ url_for('login') }}">লগইন করুন</a>
+    </p>
+  </div>
+</div>
+
+{% endblock %}

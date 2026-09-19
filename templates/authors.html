@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}লেখক — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <h1>লেখকগণ</h1>
+</header>
+
+{% if authors %}
+<div class="grid grid-3">
+  {% for a in authors %}
+  <a href="{{ url_for('author', name=a.name) }}" class="author-card">
+    <span class="author-avatar-lg">{{ a.name[:1] }}</span>
+    <div class="author-card-body">
+      <strong>{{ a.name }}</strong>
+      <small>{{ a.count }} টি লেখা</small>
+    </div>
+    <svg class="icon icon-sm author-arrow"><use href="#i-arrow-right"/></svg>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon"><svg class="icon"><use href="#i-users"/></svg></div>
+  <h3>এখনো কোনো লেখক নেই।</h3>
+  <p>লেখা যোগ করার সময় "লেখক" ফিল্ড পূরণ করুন।</p>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}সেটিংস — {{ settings.site_name }}{% endblock %}
+{% block content %}
+<header class="page-head"><h1>সেটিংস</h1></header>
+
+<form method="post" class="settings-form">
+  <fieldset>
+    <legend>সাধারণ</legend>
+    <label>সাইটের নাম <input type="text" name="site_name" value="{{ settings.site_name }}"></label>
+    <label>আপনার নাম <input type="text" name="user_name" value="{{ settings.user_name }}"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>থিম</legend>
+    <label>থিম
+      <select name="theme">
+        <option value="system" {% if settings.theme=='system' %}selected{% endif %}>সিস্টেম</option>
+        <option value="light" {% if settings.theme=='light' %}selected{% endif %}>লাইট</option>
+        <option value="dark" {% if settings.theme=='dark' %}selected{% endif %}>ডার্ক</option>
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>টাইপোগ্রাফি</legend>
+    <label>ফন্ট
+      <select name="font_family">
+        <option value="Noto Sans Bengali" {% if settings.font_family=='Noto Sans Bengali' %}selected{% endif %}>Noto Sans Bengali</option>
+        <option value="Noto Serif Bengali" {% if settings.font_family=='Noto Serif Bengali' %}selected{% endif %}>Noto Serif Bengali</option>
+        <option value="Hind Siliguri" {% if settings.font_family=='Hind Siliguri' %}selected{% endif %}>Hind Siliguri</option>
+        <option value="SolaimanLipi" {% if settings.font_family=='SolaimanLipi' %}selected{% endif %}>SolaimanLipi</option>
+        <option value="Kalpurush" {% if settings.font_family=='Kalpurush' %}selected{% endif %}>Kalpurush</option>
+      </select>
+    </label>
+    <label>ফন্ট সাইজ (px) <input type="number" name="font_size" min="12" max="32" value="{{ settings.font_size }}"></label>
+    <label>লাইন হাইট <input type="number" step="0.1" name="line_height" min="1.2" max="3" value="{{ settings.line_height }}"></label>
+    <label>কনটেন্ট প্রস্থ (px) <input type="number" name="content_width" min="500" max="1200" value="{{ settings.content_width }}"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>লেআউট</legend>
+    <label>ডিফল্ট ভিউ
+      <select name="view_mode">
+        <option value="grid" {% if settings.view_mode=='grid' %}selected{% endif %}>গ্রিড</option>
+        <option value="list" {% if settings.view_mode=='list' %}selected{% endif %}>লিস্ট</option>
+      </select>
+    </label>
+  </fieldset>
+
+  <button class="btn btn-primary">💾 সংরক্ষণ</button>
+</form>
+
+<section class="data-section">
+  <h2>ডেটা ব্যবস্থাপনা</h2>
+  <a class="btn btn-ghost" href="{{ url_for('backup') }}">💾 ডাটাবেস ব্যাকআপ</a>
+  <a class="btn btn-ghost" href="{{ url_for('export_json') }}">⬇️ সব লেখা JSON</a>
+  <a class="btn btn-ghost" href="{{ url_for('export_csv') }}">⬇️ সব লেখা CSV</a>
+
+  <form method="post" action="{{ url_for('restore') }}" enctype="multipart/form-data" class="inline-form">
+    <input type="file" name="db_file" accept=".db">
+    <button class="btn btn-danger" onclick="return confirm('সতর্কতা: বর্তমান ডেটা প্রতিস্থাপিত হবে!');">♻️ রিস্টোর</button>
+  </form>
+</section>
+{% endblock %}

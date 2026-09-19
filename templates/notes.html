@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}দৈনিক নোট — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <h1>দৈনিক নোট</h1>
+  <span class="notes-count">{{ total }} টি নোট</span>
+</header>
+
+<section class="quick-add" id="quickAdd">
+  <div class="qa-head">
+    <svg class="icon"><use href="#i-plus"/></svg>
+    <strong>দ্রুত নোট যোগ করুন</strong>
+    <small class="muted">(Ctrl + Enter দিয়ে সেভ)</small>
+  </div>
+  <textarea id="qaBody" class="qa-body" rows="2" placeholder="আজ কী শিখলেন? সংক্ষেপে লিখুন..."></textarea>
+  <div class="qa-meta">
+    <input type="date" id="qaDate" value="{{ now.strftime('%Y-%m-%d') }}">
+    <input type="text" id="qaTags" placeholder="ট্যাগ (কমা দিয়ে)" class="qa-tags">
+    <div class="qa-moods">
+      <button type="button" class="mood active" data-mood="default" title="সাধারণ">●</button>
+      <button type="button" class="mood" data-mood="learned" title="শিখেছি">📘</button>
+      <button type="button" class="mood" data-mood="idea" title="আইডিয়া">💡</button>
+      <button type="button" class="mood" data-mood="important" title="গুরুত্বপূর্ণ">⭐</button>
+      <button type="button" class="mood" data-mood="question" title="প্রশ্ন">❓</button>
+    </div>
+    <button class="btn btn-primary qa-save" id="qaSave">
+      <svg class="icon"><use href="#i-save"/></svg> সেভ
+    </button>
+  </div>
+</section>
+
+<form method="get" class="notes-filters">
+  <div class="nf-search">
+    <svg class="icon icon-sm"><use href="#i-search"/></svg>
+    <input type="search" name="q" value="{{ q }}" placeholder="নোট খুঁজুন...">
+  </div>
+  <div class="nf-dates">
+    <label>থেকে <input type="date" name="from" value="{{ date_from }}"></label>
+    <label>পর্যন্ত <input type="date" name="to" value="{{ date_to }}"></label>
+  </div>
+  {% if all_tags %}
+  <div class="nf-tags">
+    <a class="tag-pill {% if not active_tag %}active{% endif %}" href="{{ url_for('notes') }}">সব</a>
+    {% for t in all_tags %}
+      <a class="tag-pill {% if active_tag == t %}active{% endif %}"
+         href="{{ url_for('notes', tag=t) }}">#{{ t }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <button class="btn btn-ghost" type="submit">
+    <svg class="icon icon-sm"><use href="#i-search"/></svg> খুঁজুন
+  </button>
+  {% if q or date_from or date_to or active_tag %}
+    <a class="btn btn-ghost" href="{{ url_for('notes') }}">
+      <svg class="icon icon-sm"><use href="#i-x"/></svg> রিসেট
+    </a>
+  {% endif %}
+</form>
+
+{% if groups %}
+  <div class="notes-timeline">
+    {% for date, items in groups.items() %}
+      <section class="note-day">
+        <header class="note-day-head">
+          <span class="note-day-dot"></span>
+          <h2>{{ date }}</h2>
+          <small>{{ items|length }} টি নোট</small>
+        </header>
+        <div class="note-list">
+          {% for n in items %}
+            <article class="note-item mood-{{ n.mood or 'default' }} {% if n.is_pinned %}pinned{% endif %}"
+                     data-id="{{ n.id }}"
+                     data-body="{{ n.body }}"
+                     data-date="{{ n.note_date }}"
+                     data-tags="{{ n.tags or '' }}"
+                     data-mood="{{ n.mood or 'default' }}"
+                     data-pinned="{{ n.is_pinned or 0 }}">
+              <div class="note-head">
+                {% if n.mood == 'learned' %}<span class="note-mood">📘</span>
+                {% elif n.mood == 'idea' %}<span class="note-mood">💡</span>
+                {% elif n.mood == 'important' %}<span class="note-mood">⭐</span>
+                {% elif n.mood == 'question' %}<span class="note-mood">❓</span>
+                {% else %}<span class="note-mood">●</span>{% endif %}
+                <span class="note-time">{{ n.created_at[11:16] if n.created_at else '' }}</span>
+                {% if n.is_pinned %}<span class="note-pin-badge"><svg class="icon icon-sm"><use href="#i-pin"/></svg></span>{% endif %}
+                <div class="note-actions">
+                  <button class="note-btn note-pin" title="পিন">
+                    <svg class="icon icon-sm"><use href="#i-pin"/></svg>
+                  </button>
+                  <button class="note-btn note-edit" title="সম্পাদনা">
+                    <svg class="icon icon-sm"><use href="#i-edit"/></svg>
+                  </button>
+                  <button class="note-btn note-del" title="মুছুন">
+                    <svg class="icon icon-sm"><use href="#i-trash"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="note-body">{{ n.body }}</div>
+              {% if n.tags %}
+                <div class="note-tags">
+                  {% for t in n.tags.split(',') %}
+                    {% if t.strip() %}<a class="note-tag" href="{{ url_for('notes', tag=t.strip()) }}">#{{ t.strip() }}</a>{% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <div class="empty-icon"><svg class="icon"><use href="#i-note"/></svg></div>
+    <h3>এখনো কোনো নোট নেই।</h3>
+    <p>উপরের বক্সে আপনার প্রথম নোট লিখুন।</p>
+  </div>
+{% endif %}
+
+<div class="note-modal" id="noteModal" hidden>
+  <div class="nm-backdrop"></div>
+  <div class="nm-content">
+    <header class="nm-head">
+      <h3>নোট সম্পাদনা</h3>
+      <button class="nm-close" id="nmClose"><svg class="icon"><use href="#i-x"/></svg></button>
+    </header>
+    <textarea id="nmBody" rows="6"></textarea>
+    <div class="nm-row">
+      <label>তারিখ <input type="date" id="nmDate"></label>
+      <label>ট্যাগ <input type="text" id="nmTags" placeholder="কমা দিয়ে"></label>
+    </div>
+    <div class="nm-row">
+      <label>মুড
+        <select id="nmMood">
+          <option value="default">সাধারণ</option>
+          <option value="learned">শিখেছি</option>
+          <option value="idea">আইডিয়া</option>
+          <option value="important">গুরুত্বপূর্ণ</option>
+          <option value="question">প্রশ্ন</option>
+        </select>
+      </label>
+      <label class="nm-pin-label">
+        <input type="checkbox" id="nmPinned"> পিন করুন
+      </label>
+    </div>
+    <div class="nm-actions">
+      <button class="btn btn-primary" id="nmSave"><svg class="icon"><use href="#i-save"/></svg> সংরক্ষণ</button>
+      <button class="btn btn-ghost" id="nmCancel">বাতিল</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const qaBody = document.getElementById('qaBody');
+  const qaDate = document.getElementById('qaDate');
+  const qaTags = document.getElementById('qaTags');
+  const qaSave = document.getElementById('qaSave');
+  const moods  = document.querySelectorAll('.qa-moods .mood');
+
+  let selectedMood = 'default';
+  moods.forEach(m => m.addEventListener('click', () => {
+    moods.forEach(x => x.classList.remove('active'));
+    m.classList.add('active');
+    selectedMood = m.dataset.mood || 'default';
+  }));
+
+  async function saveQuick() {
+    const body = qaBody.value.trim();
+    if (!body) { qaBody.focus(); return; }
+    qaSave.disabled = true;
+    try {
+      const res = await fetch('/notes/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+          body, note_date: qaDate.value, tags: qaTags.value, mood: selectedMood
+        })
+      });
+      if (res.ok) location.reload();
+      else {
+        const j = await res.json().catch(()=>({}));
+        alert(j.error || 'সেভ ব্যর্থ');
+      }
+    } finally { qaSave.disabled = false; }
+  }
+  qaSave.addEventListener('click', saveQuick);
+  qaBody.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); saveQuick(); }
+  });
+
+  document.querySelectorAll('.note-pin').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const card = btn.closest('.note-item');
+      const id = card.dataset.id;
+      const res = await fetch(`/notes/${id}/pin`, { method: 'POST' });
+      const j = await res.json();
+      if (j.ok) setTimeout(() => location.reload(), 200);
+    });
+  });
+
+  document.querySelectorAll('.note-del').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('এই নোটটি মুছে ফেলবেন?')) return;
+      const card = btn.closest('.note-item');
+      const res = await fetch(`/notes/${card.dataset.id}/delete`, { method: 'POST' });
+      const j = await res.json();
+      if (j.ok) {
+        card.style.transition = 'all 0.3s';
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 300);
+      }
+    });
+  });
+
+  const modal = document.getElementById('noteModal');
+  const nmBody = document.getElementById('nmBody');
+  const nmDate = document.getElementById('nmDate');
+  const nmTags = document.getElementById('nmTags');
+  const nmMood = document.getElementById('nmMood');
+  const nmPinned = document.getElementById('nmPinned');
+  let editingId = null;
+
+  function openModal(card) {
+    editingId = card.dataset.id;
+    nmBody.value = card.dataset.body;
+    nmDate.value = card.dataset.date;
+    nmTags.value = card.dataset.tags;
+    nmMood.value = card.dataset.mood;
+    nmPinned.checked = card.dataset.pinned === '1';
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => nmBody.focus(), 50);
+  }
+  function closeModal() {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    editingId = null;
+  }
+
+  document.querySelectorAll('.note-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openModal(btn.closest('.note-item'));
+    });
+  });
+  document.querySelectorAll('.note-item .note-body').forEach(el => {
+    el.addEventListener('dblclick', () => openModal(el.closest('.note-item')));
+  });
+  document.getElementById('nmClose').addEventListener('click', closeModal);
+  document.getElementById('nmCancel').addEventListener('click', closeModal);
+  modal.querySelector('.nm-backdrop').addEventListener('click', closeModal);
+  document.getElementById('nmSave').addEventListener('click', async () => {
+    if (!editingId) return;
+    const body = nmBody.value.trim();
+    if (!body) { nmBody.focus(); return; }
+    const res = await fetch(`/notes/${editingId}/update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({
+        body, note_date: nmDate.value, tags: nmTags.value,
+        mood: nmMood.value, is_pinned: nmPinned.checked ? '1' : '0'
+      })
+    });
+    const j = await res.json();
+    if (j.ok) { closeModal(); location.reload(); }
+    else alert(j.error || 'সেভ ব্যর্থ');
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.hidden) closeModal();
+  });
+})();
+</script>
+{% endblock %}

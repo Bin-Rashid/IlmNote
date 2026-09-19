@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}{{ a.title }} — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<article class="reader" id="reader">
+
+  {% if a.cover_image %}
+    <img class="reader-cover" src="{{ url_for('uploaded_file', filename=a.cover_image.split('/')[-1]) }}" alt="">
+  {% endif %}
+
+  <!-- Sticky Tools rail (top-right) -->
+  <div class="tools-rail" id="toolsRail">
+    <button id="toolsToggle" class="tools-toggle" type="button" aria-expanded="false" aria-label="টুলস">
+      <span class="tools-icon">
+        <svg class="icon"><use href="#i-settings"/></svg>
+      </span>
+    </button>
+
+    <div class="tools-panel" id="toolsPanel" hidden>
+      <button id="bmBtn" class="tool-btn" data-id="{{ a.id }}">
+        <svg class="icon"><use href="#i-bookmark"/></svg>
+        <span>বুকমার্ক</span>
+      </button>
+      <button id="favBtn" class="tool-btn" data-id="{{ a.id }}">
+        <svg class="icon"><use href="#i-star"/></svg>
+        <span>পছন্দ</span>
+      </button>
+      {% if is_owner %}
+      <a class="tool-btn" href="{{ url_for('editor', aid=a.id) }}">
+        <svg class="icon"><use href="#i-edit"/></svg>
+        <span>সম্পাদনা</span>
+      </a>
+      {% endif %}
+      <button class="tool-btn" onclick="window.print()">
+        <svg class="icon"><use href="#i-printer"/></svg>
+        <span>প্রিন্ট</span>
+      </button>
+      <button class="tool-btn" id="fullscreenBtn">
+        <svg class="icon"><use href="#i-expand"/></svg>
+        <span>ফুলস্ক্রিন</span>
+      </button>
+      <div class="tool-group">
+        <span class="tool-label">ফন্ট</span>
+        <button class="tool-mini" id="fontDec" title="ছোট">A−</button>
+        <button class="tool-mini" id="fontInc" title="বড়">A+</button>
+      </div>
+      {% if is_owner %}
+      <a class="tool-btn" href="{{ url_for('export_markdown', aid=a.id) }}">
+        <svg class="icon"><use href="#i-download"/></svg>
+        <span>Markdown</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <header class="reader-head">
+    {% if a.category_name %}
+      <a class="badge" style="--badge-color:{{ a.category_color }}" href="{{ url_for('articles', category=a.category_slug) }}">{{ a.category_name }}</a>
+    {% endif %}
+
+    <h1>{{ a.title }}</h1>
+    {% if a.short_description %}<p class="lede">{{ a.short_description }}</p>{% endif %}
+
+    <div class="reader-author-row">
+      {% if a.author_name %}
+      <div class="author-chip">
+        <span class="author-avatar">{{ a.author_name[:1] }}</span>
+        <span class="author-info">
+          <strong>{{ a.author_name }}</strong>
+          <small>লেখক</small>
+        </span>
+      </div>
+      {% endif %}
+
+      <div class="reader-meta">
+        <span><svg class="icon icon-sm"><use href="#i-calendar"/></svg> {{ a.created_at[:10] }}</span>
+        {% if a.updated_at and a.updated_at != a.created_at %}
+          <span><svg class="icon icon-sm"><use href="#i-clock"/></svg> হালনাগাদ {{ a.updated_at[:10] }}</span>
+        {% endif %}
+        <span id="readingTimeBadge" data-minutes="{{ a.reading_time }}" class="rt-badge">
+          <svg class="icon icon-sm"><use href="#i-clock"/></svg>
+          <span class="rt-text">{{ a.reading_time }} মিনিট পড়া</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  {% if tags %}
+  <div class="chips small">
+    {% for t in tags %}
+      <a class="chip" href="{{ url_for('articles', tag=t.slug) }}">
+        <svg class="icon icon-sm"><use href="#i-tag"/></svg> {{ t.name }}
+      </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="article-body" id="articleBody">
+    {{ content|safe }}
+  </div>
+
+  {# ---------- Sources / References ---------- #}
+  {% if sources and sources|length > 0 %}
+  <section class="sources">
+    <h3>
+      <svg class="icon"><use href="#i-source"/></svg>
+      সোর্স / রেফারেন্স
+    </h3>
+    <ol class="sources-list-ref">
+      {% for s in sources %}
+      <li id="ref-{{ s.idx }}">
+        <span class="ref-num">[{{ s.idx }}]</span>
+        <span class="ref-label">{{ s.label }}</span>
+        {% if s.url %}
+          <a class="ref-link" href="{{ s.url }}" target="_blank" rel="noopener">
+            <svg class="icon icon-sm"><use href="#i-link"/></svg>
+            {{ s.url }}
+          </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% elif a.source_name or a.source_url %}
+  <section class="sources">
+    <h3><svg class="icon"><use href="#i-source"/></svg> সোর্স / রেফারেন্স</h3>
+    <ul>
+      {% if a.source_name %}
+        <li><span class="source-label">[১] সোর্স:</span> <span>{{ a.source_name }}</span></li>
+      {% endif %}
+      {% if a.source_url %}
+        <li><span class="source-label">লিংক:</span>
+          <a href="{{ a.source_url }}" target="_blank" rel="noopener">{{ a.source_url }}</a>
+        </li>
+      {% endif %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if related %}
+  <section class="related">
+    <h3>সম্পর্কিত লেখা</h3>
+    <div class="grid grid-2">
+      {% for r in related %}
+        <a class="mini-card" href="{{ url_for('article', slug=r.slug) }}">
+          <strong>{{ r.title }}</strong>
+          <small>{{ r.created_at[:10] }}</small>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</article>
+
+<button id="scrollToggle" class="scroll-fab" aria-label="স্ক্রল">
+  <svg class="icon scroll-icon-down"><use href="#i-arrow-down"/></svg>
+  <svg class="icon scroll-icon-up"><use href="#i-arrow-up"/></svg>
+</button>
+
+{% endblock %}
+{% block scripts %}
+<script>hljs.highlightAll();</script>
+{% endblock %}

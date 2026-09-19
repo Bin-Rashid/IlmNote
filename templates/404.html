@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}পাওয়া যায়নি — {{ settings.site_name }}{% endblock %}
+{% block content %}
+<div class="empty">
+  <h1>404</h1>
+  <p>দুঃখিত, পৃষ্ঠাটি পাওয়া যায়নি।</p>
+  <a class="btn btn-primary" href="{{ url_for('index') }}">হোমে ফিরে যান</a>
+</div>
+{% endblock %}

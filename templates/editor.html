@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}{{ 'সম্পাদনা' if article else 'নতুন লেখা' }} — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='js/quill.snow.css') }}">
+
+<header class="page-head">
+  <h1>{{ 'লেখা সম্পাদনা' if article else 'নতুন লেখা' }}</h1>
+</header>
+
+<form method="post" enctype="multipart/form-data" class="editor-form" id="editorForm">
+  <div class="grid grid-2">
+    <label>শিরোনাম *
+      <input type="text" name="title" required value="{{ article.title if article else '' }}">
+    </label>
+    <label>ক্যাটাগরি
+      <select name="category_id">
+        <option value="">— নির্বাচন করুন —</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {% if article and article.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <label>সংক্ষিপ্ত বর্ণনা
+    <textarea name="short_description" rows="2">{{ article.short_description if article else '' }}</textarea>
+  </label>
+
+  <div class="grid grid-2">
+    <label>লেখক
+      <input type="text" name="author_name" value="{{ article.author_name if article else '' }}">
+    </label>
+    <label>ট্যাগ (কমা দিয়ে আলাদা)
+      <input type="text" name="tags" value="{{ tags_str }}">
+    </label>
+  </div>
+
+  <label>কভার ইমেজ
+    <input type="file" name="cover_image" accept="image/*">
+  </label>
+  {% if article and article.cover_image %}
+    <img class="preview-cover" src="{{ url_for('uploaded_file', filename=article.cover_image.split('/')[-1]) }}" alt="">
+  {% endif %}
+
+  <label>বিষয়বস্তু</label>
+  <div id="quillEditor"></div>
+  <input type="hidden" name="content" id="contentInput">
+
+  <!-- Smart Multi-Source Input -->
+  <div class="sources-editor">
+    <div class="sources-head">
+      <label class="sources-title">
+        <svg class="icon icon-sm"><use href="#i-source"/></svg>
+        সোর্স / রেফারেন্স
+      </label>
+    </div>
+
+    <p class="sources-hint">
+      প্রতিটি সোর্স <strong>আলাদা লাইনে</strong> লিখুন। যেমন:
+      <code>[১] https://example.com</code> অথবা
+      <code>[২] বইয়ের নাম — লেখক</code>
+      <br>আপনার সব লিংক একসাথে পেস্ট করলেও সিস্টেম অটো লাইন-ভাগ করবে।
+    </p>
+
+    <textarea id="sourcesRaw" name="sources_raw" rows="10" placeholder="[১] https://the-qi.com/blogs/journal/the-history-of-tea
+[২] https://intl.dpm.org.cn/news/detail/96348.html
+[৩] https://www.teadrunk.com/pages/history-of-tea
+[৪] Tea With Mrs Beeton - Isabella Beeton
+[৫] https://www.nationalarchives.gov.uk/education/resources/hong-kong-and-the-opium-wars/">{{ sources_raw }}</textarea>
+
+    <div class="sources-preview" id="sourcesPreview"></div>
+  </div>
+
+  <div class="grid grid-2">
+    <label class="check"><input type="checkbox" name="is_published" value="1" {% if not article or article.is_published %}checked{% endif %}> প্রকাশ করুন</label>
+    <label class="check"><input type="checkbox" name="is_featured" value="1" {% if article and article.is_featured %}checked{% endif %}> ফিচার্ড</label>
+  </div>
+
+  <div class="actions">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#i-save"/></svg> সংরক্ষণ করুন
+    </button>
+    <a class="btn btn-ghost" href="{{ url_for('articles') }}">
+      <svg class="icon"><use href="#i-x"/></svg> বাতিল
+    </a>
+    {% if article %}
+      <a class="btn btn-ghost" href="{{ url_for('article', slug=article.slug) }}">
+        <svg class="icon"><use href="#i-eye"/></svg> দেখুন
+      </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if article %}
+<div class="editor-secondary-actions">
+  <form method="post" action="{{ url_for('duplicate_article', aid=article.id) }}" style="display:inline">
+    <button class="btn btn-ghost"><svg class="icon"><use href="#i-copy"/></svg> কপি করুন</button>
+  </form>
+  <form method="post" action="{{ url_for('delete_article', aid=article.id) }}" onsubmit="return confirm('মুছে ফেলবেন?');" style="display:inline">
+    <button class="btn btn-danger"><svg class="icon"><use href="#i-trash"/></svg> মুছে ফেলুন</button>
+  </form>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/quill.min.js') }}"></script>
+<script>
+  // ---------- Quill editor ----------
+  const quill = new Quill('#quillEditor', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ header: [1,2,3,false] }],
+        ['bold','italic','underline','strike'],
+        [{ list:'ordered' }, { list:'bullet' }],
+        ['blockquote','code-block'],
+        ['link','image'],
+        [{ align: [] }],
+        ['clean']
+      ]
+    }
+  });
+
+  // Load existing content safely
+  try {
+    const initial = {{ (article.content if article else '')|tojson }};
+    quill.clipboard.dangerouslyPasteHTML(initial || '');
+  } catch (e) {
+    console.warn('Initial content load failed:', e);
+  }
+
+  // Sync Quill content to hidden input on submit
+  const editorForm = document.getElementById('editorForm');
+  if (editorForm) {
+    editorForm.addEventListener('submit', function() {
+      const hidden = document.getElementById('contentInput');
+      if (hidden) hidden.value = quill.root.innerHTML;
+    });
+  }
+
+  // ---------- Sticky toolbar visual feedback ----------
+  (function() {
+    const toolbar = document.querySelector('.ql-toolbar.ql-snow');
+    if (!toolbar) return;
+
+    window.addEventListener('scroll', () => {
+      const rect = toolbar.getBoundingClientRect();
+      const isStuck = rect.top <= 13 && rect.top >= 0;
+      toolbar.classList.toggle('ql-toolbar-stuck', isStuck);
+    }, { passive: true });
+  })();
+
+  // ---------- Smart source textarea ----------
+  const raw = document.getElementById('sourcesRaw');
+  const preview = document.getElementById('sourcesPreview');
+
+  function parseSources(text) {
+    if (!text) return [];
+    return text.split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map((line, i) => {
+        const m = line.match(/^\[([০-৯0-9]+)\]\s*(.+)$/);
+        let num, rest;
+        if (m) {
+          num = m[1];
+          rest = m[2].trim();
+        } else {
+          num = (i + 1).toString();
+          rest = line;
+        }
+        const urlMatch = rest.match(/https?:\/\/\S+/);
+        const url = urlMatch ? urlMatch[0] : '';
+        const label = urlMatch
+          ? rest.replace(urlMatch[0], '').replace(/[—\-–]+\s*$/, '').replace(/^\s*[—\-–]+/, '').trim()
+          : rest;
+        return { num, label: label || url, url };
+      });
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function renderPreview() {
+    if (!preview || !raw) return;
+    const items = parseSources(raw.value);
+    if (!items.length) { preview.innerHTML = ''; return; }
+    let html = '<div class="src-preview-label">সোর্স প্রিভিউ (' + items.length + ' টি):</div>';
+    html += '<ol class="src-preview-list">';
+    items.forEach(s => {
+      html += '<li>';
+      html += '<span class="src-num">[' + s.num + ']</span> ';
+      html += '<span class="src-label">' + escapeHtml(s.label) + '</span>';
+      if (s.url) {
+        html += '<a class="src-url" href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener">' + escapeHtml(s.url) + '</a>';
+      }
+      html += '</li>';
+    });
+    html += '</ol>';
+    preview.innerHTML = html;
+  }
+
+  if (raw) {
+    raw.addEventListener('input', renderPreview);
+    renderPreview();
+  }
+</script>
+{% endblock %}

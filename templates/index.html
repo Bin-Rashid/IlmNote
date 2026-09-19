@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}ড্যাশবোর্ড — {{ settings.site_name }}{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>আসসালামু আলাইকুম, <span class="grad-text">{{ settings.user_name }}</span></h1>
+    <p>আজ যা শিখলেন, তা লিখে রাখুন। জ্ঞান হারিয়ে যায়, লেখা থেকে যায়।</p>
+  </div>
+  <div class="hero-glow"></div>
+</section>
+
+<section class="stats">
+  <div class="stat-card">
+    <div class="stat-icon"><svg class="icon"><use href="#i-book"/></svg></div>
+    <div class="stat-body">
+      <span class="stat-num">{{ total_articles }}</span>
+      <label>মোট লেখা</label>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><svg class="icon"><use href="#i-folder"/></svg></div>
+    <div class="stat-body">
+      <span class="stat-num">{{ total_categories }}</span>
+      <label>ক্যাটাগরি</label>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><svg class="icon"><use href="#i-tag"/></svg></div>
+    <div class="stat-body">
+      <span class="stat-num">{{ total_tags }}</span>
+      <label>ট্যাগ</label>
+    </div>
+  </div>
+</section>
+
+{% macro card(a) %}
+<article class="card">
+  <a class="card-media" href="{{ url_for('article', slug=a.slug) }}">
+    {% if a.cover_image %}
+      <img loading="lazy" src="{{ url_for('uploaded_file', filename=a.cover_image.split('/')[-1]) }}" alt="">
+    {% else %}
+      <div class="card-cover placeholder"><span>{{ a.title[:1] }}</span></div>
+    {% endif %}
+  </a>
+  <div class="card-body">
+    {% if a.category_name %}
+      <span class="badge" style="--badge-color:{{ a.category_color }}">{{ a.category_name }}</span>
+    {% endif %}
+    <h3><a href="{{ url_for('article', slug=a.slug) }}">{{ a.title }}</a></h3>
+    {% if a.author_name %}
+    <div class="card-author">
+      <span class="mini-avatar">{{ a.author_name[:1] }}</span>
+      <span>{{ a.author_name }}</span>
+    </div>
+    {% endif %}
+    <p class="muted">{{ a.short_description[:120] }}</p>
+    <div class="meta">
+      <span><svg class="icon icon-sm"><use href="#i-clock"/></svg> {{ a.reading_time }} মিনিট</span>
+      <span><svg class="icon icon-sm"><use href="#i-calendar"/></svg> {{ a.created_at[:10] }}</span>
+    </div>
+  </div>
+</article>
+{% endmacro %}
+
+<section class="section-head">
+  <h2>সাম্প্রতিক লেখা</h2>
+  <a href="{{ url_for('articles') }}" class="link-arrow">
+    সব দেখুন <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg>
+  </a>
+</section>
+
+{% if recent %}
+<div class="grid grid-3">{% for a in recent %}{{ card(a) }}{% endfor %}</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon"><svg class="icon"><use href="#i-book"/></svg></div>
+  <h3>এখনো কোনো লেখা নেই।</h3>
+  <p>আজ যা শিখলেন, তা ডকুমেন্ট করা শুরু করুন।</p>
+  <a href="{{ url_for('editor') }}" class="btn btn-primary">
+    <svg class="icon"><use href="#i-plus"/></svg> নতুন লেখা লিখুন
+  </a>
+</div>
+{% endif %}
+
+{% if featured %}
+<section class="section-head"><h2>ফিচার্ড</h2></section>
+<div class="grid grid-3">{% for a in featured %}{{ card(a) }}{% endfor %}</div>
+{% endif %}
+
+{% if bookmarked %}
+<section class="section-head"><h2>বুকমার্ক করা</h2></section>
+<div class="grid grid-3">{% for a in bookmarked %}{{ card(a) }}{% endfor %}</div>
+{% endif %}
+
+<section class="section-head"><h2>ক্যাটাগরি</h2></section>
+<div class="chips">
+  {% for c in categories %}
+    <a class="chip" style="--chip-color:{{ c.color }}" href="{{ url_for('articles', category=c.slug) }}">
+      <span class="chip-dot"></span>
+      {{ c.name }} <span class="count">{{ c.count }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+{% endblock %}

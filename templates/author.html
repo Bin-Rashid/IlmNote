@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} — লেখক{% endblock %}
+{% block content %}
+
+<header class="author-header">
+  <span class="author-avatar-lg">{{ name[:1] }}</span>
+  <div>
+    <h1>{{ name }}</h1>
+    <p class="muted">{{ articles|length }} টি লেখা</p>
+  </div>
+</header>
+
+{% if articles %}
+<div class="grid grid-3">
+  {% for a in articles %}
+  <article class="card">
+    <a class="card-media" href="{{ url_for('article', slug=a.slug) }}">
+      {% if a.cover_image %}
+        <img loading="lazy" src="{{ url_for('uploaded_file', filename=a.cover_image.split('/')[-1]) }}" alt="">
+      {% else %}
+        <div class="card-cover placeholder"><span>{{ a.title[:1] }}</span></div>
+      {% endif %}
+    </a>
+    <div class="card-body">
+      {% if a.category_name %}
+        <span class="badge" style="--badge-color:{{ a.category_color }}">{{ a.category_name }}</span>
+      {% endif %}
+      <h3><a href="{{ url_for('article', slug=a.slug) }}">{{ a.title }}</a></h3>
+      <div class="card-author">
+        <span class="mini-avatar">{{ name[:1] }}</span>
+        <span>{{ name }}</span>
+      </div>
+      <p class="muted">{{ a.short_description[:120] }}</p>
+      <div class="meta">
+        <span><svg class="icon icon-sm"><use href="#i-clock"/></svg> {{ a.reading_time }} মিনিট</span>
+        <span><svg class="icon icon-sm"><use href="#i-calendar"/></svg> {{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <h3>এই লেখকের কোনো লেখা নেই।</h3>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}ট্যাগ — {{ settings.site_name }}{% endblock %}
+{% block content %}
+<header class="page-head"><h1>ট্যাগ</h1></header>
+
+<form method="post" class="inline-form">
+  <input type="text" name="name" placeholder="নতুন ট্যাগ" required>
+  <button class="btn btn-primary">যোগ করুন</button>
+</form>
+
+<div class="chips">
+  {% for t in tags %}
+    <span class="chip">
+      <a href="{{ url_for('articles', tag=t.slug) }}">#{{ t.name }}</a>
+      <span class="count">{{ t.count }}</span>
+      <form method="post" action="{{ url_for('delete_tag', tid=t.id) }}" style="display:inline">
+        <button class="mini-x">✕</button>
+      </form>
+    </span>
+  {% endfor %}
+</div>
+{% endblock %}
